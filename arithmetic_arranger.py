@@ -8,100 +8,64 @@ def arithmetic_arranger(problems, totals=False):
     """
     # Use regex to capture different parts of the problem in groups.
     # Grouping parts of the problem will enable easier rearrangement of the problem.
-    problem_pattern = re.compile(r'(?P<first_operand>[\w\W]+) (?P<sign>[+-/*]) (?P<last_operand>[\w\W]+)')
-    first_operands = ""     # Stores the first operands of the problems in the required format.
-    second_operands ="\n"
-    dash = "\n"
-    sum = "\n"
+    extractor = re.compile(r'(?P<first_operand>[\w\W]+) (?P<sign>[+-/*]) (?P<last_operand>[\w\W]+)')
+
+    first_operands = []
+    second_operands =[]
+    width = []
+    dash = []
+    total = []
+    sign = []
 
     #if there are too many problems (>5) return an error
     if len(problems) > 5:
         return "Error: Too many problems."
 
     for i in range(len(problems)):
-        problem = problem_pattern.match(problems[i])
-        if problem.group() == None:
+        math_expr = extractor.match(problems[i])
+
+        if math_expr.group() == None:
             pass
+
         #The appropriate operators the function will accept are **addition** and **subtraction** only. Otherwise return an error
-        elif problem.group('sign') not in ['+', '-']:
+        elif math_expr.group('sign') not in ['+', '-']:
             return "Error: Operator must be '+' or '-'."
+
         # Each number (operand) should only contain digits. Otherwise, the function will return an error.
-        elif not problem.group('first_operand').isdecimal() or not problem.group('last_operand').isdecimal() :
+        elif not math_expr.group('first_operand').isdecimal() or not math_expr.group('last_operand').isdecimal() :
             return "Error: Numbers must only contain digits."
+
         # Each operand (aka number on each side of the operator) has a max of four digits in width.
-        elif len(problem.group("first_operand")) > 4 or len(problem.group("last_operand")) > 4:
+        elif len(math_expr.group("first_operand")) > 4 or len(math_expr.group("last_operand")) > 4:
             return "Error: Numbers cannot be more than four digits."
 
-        else: # Code below is responsible for rearranging the problem into the required format.
-            if i < len(problems)-1: # Problems are separated by 4 spaces, exclude the last item of the list as no trailing white space is required.
-                if len(problem.group('first_operand')) == len(problem.group('last_operand')):
-                    # ln stores width of the longest operand plus length 2 (for operator and space)
-                    #  right justify the operands of the problem at ln.
-                    ln = len(problem.group('first_operand')) + 2
-                    first_operands += problem.group('first_operand').rjust(ln) + '    '
-                    second_operands += (problem.group('sign') +' '+ problem.group('last_operand')).rjust(ln) + '    '
-                    dash += ('-' * len(problem.group('first_operand')) + 2*'-').rjust(ln) +'    '
-                    if problem.group('sign') == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln) +'    '
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln) +'    '
+        else:
+            width.append(max([len(math_expr.group("first_operand")), \
+                len(math_expr.group("last_operand"))]))
+            sign.append(math_expr.group('sign'))
+            first_operands.append(math_expr.group("first_operand").rjust(width[i] + 2))
+            second_operands.append(sign[i] + ' ' + (math_expr.group("last_operand")).rjust(width[i]))
 
-                elif len(problem.group('first_operand')) > len(problem.group('last_operand')):
-                    ln = len(problem.group('first_operand')) + 2
-                    diff_len = len(problem.group('first_operand')) - len(problem.group('last_operand'))
-                    first_operands += problem.group('first_operand').rjust(ln) + '    '
-                    second_operands += (problem.group('sign') + ' ' + ' '*(diff_len)+ problem.group('last_operand')).rjust(ln) + '    '
-                    dash += ('-' * len(problem.group('first_operand')) + 2*'-').rjust(ln) + '    '
-                    if problem.group('sign') == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln) +'    '
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln) +'    '
+            if math_expr.group('sign') == "+":
+                total.append(str(int(math_expr.group("first_operand")) \
+                             + int(math_expr.group("last_operand"))).rjust(width[i]+ 2))
 
-                elif len(problem.group('first_operand')) < len(problem.group('last_operand')):
-                    ln = len(problem.group('last_operand')) + 2
-                    first_operands += (problem.group('first_operand')).rjust(ln) + '    '
-                    second_operands += (problem.group('sign') + ' ' + problem.group('last_operand')).rjust(ln) + '    '
-                    dash += ('-' * len(problem.group('last_operand')) + 2*'-').rjust(ln) + '    '
-                    if problem.group('sign') == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln) +'    '
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln) +'    '
+            if math_expr.group('sign') == "-":
+                total.append(str(int(math_expr.group("first_operand")) \
+                                 - int(math_expr.group("last_operand"))).rjust(width[i]+ 2))
 
-            else: # Remove trailing white space for the last item of the list
-                if len(problem.group('first_operand')) == len(problem.group('last_operand')):
-                    ln = len(problem.group('first_operand')) + 2
-                    first_operands += (problem.group('first_operand')).rjust(ln)
-                    second_operands += (problem.group('sign')+' '+problem.group('last_operand')).rjust(ln)
-                    dash += ('-' * len(problem.group('first_operand')) + 2*'-').rjust(ln)
-                    if problem.group('sign') == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln)
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln)
-
-                elif len(problem.group('first_operand')) > len(problem.group('last_operand')):
-                    ln = len(problem.group('first_operand')) + 2
-                    diff_len = len(problem.group('first_operand')) - len(problem.group('last_operand'))
-                    first_operands += (problem.group('first_operand')).rjust(ln)
-                    second_operands += (problem.group(2)+ ' ' + ' '*(diff_len)+ problem.group('last_operand')).rjust(ln)
-                    dash += ('-' * len(problem.group('first_operand')) + 2*'-').rjust(ln)
-                    if problem.group('sign') == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln)
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln)
-
-                elif len(problem.group('first_operand')) < len(problem.group('last_operand')):
-                    ln = len(problem.group('last_operand')) + 2
-                    first_operands += (problem.group('first_operand')).rjust(ln)
-                    second_operands += (problem.group(2)+ ' ' + problem.group('last_operand')).rjust(ln)
-                    dash += ('-' * len(problem.group('last_operand')) + 2*'-').rjust(ln)
-                    if problem.group(2) == "+":
-                        sum += (str(int(problem.group('first_operand')) + int(problem.group('last_operand')))).rjust(ln)
-                    else:
-                        sum += (str(int(problem.group('first_operand')) - int(problem.group('last_operand')))).rjust(ln)
+    #create dash separators for each problem.
+    for i in range(len(width)):
+        dash.append('-' * (width[i] + 2))
+    
+    operand_one = '    '.join(first_operands) + '\n'
+    operand_two = '    '.join(second_operands) + '\n'
+    dashes = '    '.join(dash)
+    summation = '    '.join(total)
 
     if totals == True:
-        arranged_problems = first_operands + second_operands + dash + sum
+        arr_prob = operand_one + operand_two + dashes + '\n' + summation
     else:
-        arranged_problems = first_operands + second_operands + dash
+        arr_prob = operand_one + operand_two + dashes
 
-    return arranged_problems
+    return arr_prob
